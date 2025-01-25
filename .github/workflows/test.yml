@@ -4,7 +4,8 @@ on: push
 
 jobs:
   test:
-    name: 22f3002933@ds.study.iitm.ac.in
+    name: test
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Hello, World!"
+      - name: 22f3002933@ds.study.iitm.ac.in
+        run: echo "Hello, World!"
