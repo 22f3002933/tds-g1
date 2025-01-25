@@ -17,9 +17,16 @@ class handler(BaseHTTPRequestHandler):
         names = query.get('name', [])
         
         marks = []
-        for student in student_marks:
-            if student['name'] in names:
-                marks.append(student['marks'])
+        # the order should be the other of input names
+        for name in names:
+            for student in student_marks:
+                if student['name'] == name:
+                    marks.append(student['marks'])
+                    break
+                
+        # for student in student_marks:
+        #     if student['name'] in names:
+        #         marks.append(student['marks'])
         
         # Return the marks as a JSON object
         response = {"marks": marks}
