@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import csv
+import numpy as np
+import requests
 
 app = FastAPI()
 
