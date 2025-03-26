@@ -52,9 +52,9 @@ class SimilarityRequest(BaseModel):
     docs: List[str]
     query: str
     
-def generate_embeddings(texts: List[str]) -> List[List[float]]:\
-    ai_proxy_token=os.getenv("AI_PROXY_TOKEN")
+def generate_embeddings(texts: List[str]) -> List[List[float]]:
     try:
+        ai_proxy_token=os.getenv("AI_PROXY_TOKEN")
         response = requests.post(
             "https://aiproxy.sanand.workers.dev/openai/v1/embeddings",
             headers={"Authorization": f"Bearer {ai_proxy_token}"},
