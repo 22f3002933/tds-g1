@@ -175,12 +175,144 @@ class QueryRouter:
         # No matching query found
         raise HTTPException(status_code=400, detail="Query could not be parsed")
 
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_ticket_status",
+            "description": "Get the status of a particular ticket",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "ticket_id": {
+                        "type": "integer",
+                        "description": "Ticket ID number"
+                    }
+                },
+                "required": ["ticket_id"],
+                "additionalProperties": False
+            },
+            "strict": True
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "schedule_meeting",
+            "description": "Schedule a meeting",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "description": "Date of the meeting"
+                    },
+                    "time": {
+                        "type": "string",
+                        "description": "Time of the meeting"
+                    },
+                    "meeting_room": {
+                        "type": "string",
+                        "description": "Meeting Room for the meeting"
+                    }
+
+                },
+                "required": ["date", "time", "meeting_room"],
+                "additionalProperties": False
+            },
+            "strict": True
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "get_expense_balance",
+            "description": "Shows the expense balance for an employee",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "employee_id": {
+                        "type": "integer",
+                        "description": "Employee ID number"
+                    }
+                },
+                "required": ["employee_id"],
+                "additionalProperties": False
+            },
+            "strict": True
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "calculate_performance_bonus",
+            "description": "Calculate the performance bonus for an employee in a given year",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "employee_id": {
+                        "type": "integer",
+                        "description": "Employee ID number"
+                    },
+
+                    "year": {
+                        "type": "integer",
+                        "description": "Year"
+                    }
+                    
+                },
+                "required": ["employee_id", "year"],
+                "additionalProperties": False
+            },
+            "strict": True
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "report_office_issue",
+            "description": "Report an office issue for a specific department",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "issue_code": {
+                        "type": "integer",
+                        "description": "Issue Code number"
+                    },
+
+                    "department": {
+                        "type": "string",
+                        "description": "Department for which the issue is reported"
+                    }
+                },
+                "required": ["issue_code", "department"],
+                "additionalProperties": False
+            },
+            "strict": True
+        }
+    },
+]
+
 @app.get("/api/ga3-q8/execute")
 async def execute_query(q: str = Query(..., min_length=1)):
     try:
         # Parse and route the query
-        result = QueryRouter.parse_query(q)
-        return result
+        # result = QueryRouter.parse_query(q)
+        ai_proxy_token=os.getenv("AI_PROXY_TOKEN")
+        response = requests.post(
+            "https://aiproxy.sanand.workers.dev/openai/v1/embeddings",
+            headers={"Authorization": f"Bearer {ai_proxy_token}"},
+            json={"model": "text-embedding-3-small", "input": texts}
+        )
+        
+        response.raise_for_status()
+        output = response.json()["choices"][0]["message"]
+        # return result
+
+        return {"name": output["tool_calls"][0]["function"]["name"] , "arguments": output["tool_calls"][0]["function"]["arguments"]}
     except HTTPException as e:
         print(f"Error processing query: {str(e)}")
         raise e
