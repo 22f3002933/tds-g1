@@ -1,10 +1,13 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List
+from typing import List, Dict, Any
+import uvicorn
 import csv
 import numpy as np
 import requests
 from pydantic import BaseModel
+import re
+import json
 
 app = FastAPI()
 
@@ -72,7 +75,7 @@ def generate_embeddings(texts: List[str]) -> List[List[float]]:
 def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
     return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
 
-@app.post("/api/similarity")
+@app.post("/api/ga3-q7/similarity")
 async def find_similar_documents(request: SimilarityRequest):
     try:
         # Generate embeddings for query and documents
@@ -100,4 +103,86 @@ async def find_similar_documents(request: SimilarityRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Similarity search failed: {str(e)}")
 
+
+class QueryRouter:
+    @staticmethod
+    def parse_query(query: str) -> Dict[str, Any]:
+        print(f"Received query: {query}")
+        
+        # Ticket Status Query
+        ticket_match = re.search(r'ticket (\d+)', query, re.IGNORECASE)
+        if ticket_match:
+            return {
+                "name": "get_ticket_status",
+                "arguments": json.dumps({"ticket_id": int(ticket_match.group(1))})
+            }
+        
+        # Meeting Scheduling Query
+        meeting_match = re.search(
+            r'meeting on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2}) in (.*)', 
+            query, 
+            re.IGNORECASE
+        )
+        if meeting_match:
+            return {
+                "name": "schedule_meeting",
+                "arguments": json.dumps({
+                    "date": meeting_match.group(1),
+                    "time": meeting_match.group(2),
+                    "meeting_room": meeting_match.group(3)
+                })
+            }
+        
+        # Expense Balance Query
+        expense_match = re.search(r'(\d+) expense balance', query, re.IGNORECASE)
+        if expense_match:
+            return {
+                "name": "get_expense_balance",
+                "arguments": json.dumps({"employee_id": int(expense_match.group(1))})
+            }
+        
+        # Performance Bonus Query
+        bonus_match = re.search(
+            r'performance bonus for employee (\d+) for (\d{4})', 
+            query, 
+            re.IGNORECASE
+        )
+        if bonus_match:
+            return {
+                "name": "calculate_performance_bonus",
+                "arguments": json.dumps({
+                    "employee_id": int(bonus_match.group(1)),
+                    "current_year": int(bonus_match.group(2))
+                })
+            }
+        
+        # Office Issue Reporting Query
+        issue_match = re.search(
+            r'office issue (\d+) for the (.*) department', 
+            query, 
+            re.IGNORECASE
+        )
+        if issue_match:
+            return {
+                "name": "report_office_issue",
+                "arguments": json.dumps({
+                    "issue_code": int(issue_match.group(1)),
+                    "department": issue_match.group(2)
+                })
+            }
+        
+        # No matching query found
+        raise HTTPException(status_code=400, detail="Query could not be parsed")
+
+@app.get("/api/ga3-q8/execute")
+async def execute_query(q: str = Query(..., min_length=1)):
+    try:
+        # Parse and route the query
+        result = QueryRouter.parse_query(q)
+        return result
+    except HTTPException as e:
+        print(f"Error processing query: {str(e)}")
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
 
