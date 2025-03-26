@@ -17,7 +17,7 @@ student_marks = [{"name":"M","marks":90},{"name":"w","marks":12},{"name":"PvCFcv
 
 student_dict = {s["name"]: s["marks"] for s in student_marks}
 
-@app.get("/ga2-q6/api")
+@app.get("/api/ga2-q6")
 def get_marks(name: List[str] = Query([])):
     marks = [student_dict.get(n, None) for n in name]
     return {"marks": marks}
@@ -36,7 +36,7 @@ students_data = []
 
 load_csv()
 
-@app.get("/ga2-q9/api")
+@app.get("/api/ga2-q9")
 def get_students(class_: List[str] = Query(None, alias="class")):
 
     if class_:
