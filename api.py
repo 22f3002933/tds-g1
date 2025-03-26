@@ -303,9 +303,17 @@ async def execute_query(q: str = Query(..., min_length=1)):
         # result = QueryRouter.parse_query(q)
         ai_proxy_token=os.getenv("AI_PROXY_TOKEN")
         response = requests.post(
-            "https://aiproxy.sanand.workers.dev/openai/v1/embeddings",
-            headers={"Authorization": f"Bearer {ai_proxy_token}"},
-            json={"model": "text-embedding-3-small", "input": texts}
+            "https://aiproxy.sanand.workers.dev/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {ai_proxy_token}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "gpt-4o-mini",
+                "messages": [{"role": "user", "content": q}],
+                "tools": tools,
+                "tool_choice": "auto",
+            },
         )
         
         response.raise_for_status()
