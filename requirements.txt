@@ -3,3 +3,4 @@ uvicorn
 numpy
 requests
 pydantic
+bs4
