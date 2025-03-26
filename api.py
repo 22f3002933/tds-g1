@@ -4,6 +4,7 @@ from typing import List
 import csv
 import numpy as np
 import requests
+from pydantic import BaseModel
 
 app = FastAPI()
 
