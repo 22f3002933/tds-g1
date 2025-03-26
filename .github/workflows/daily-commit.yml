@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure Git (22f3002933@ds.study.iitm.ac.in)
+      - name: 22f3002933@ds.study.iitm.ac.in
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "22f3002933@ds.study.iitm.ac.in"
