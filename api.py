@@ -45,3 +45,56 @@ def get_students(class_: List[str] = Query(None, alias="class")):
 
         return {"students": filtered_students}
     return {"students": students_data}
+
+class SimilarityRequest(BaseModel):
+    docs: List[str]
+    query: str
+    
+def generate_embeddings(texts: List[str]) -> List[List[float]]:\
+    ai_proxy_token=os.getenv("AI_PROXY_TOKEN")
+    try:
+        response = requests.post(
+            "https://aiproxy.sanand.workers.dev/openai/v1/embeddings",
+            headers={"Authorization": f"Bearer {ai_proxy_token}"},
+            json={"model": "text-embedding-3-small", "input": texts}
+        )
+        
+        response.raise_for_status()
+        embedding_data = response.json()
+
+        return [data['embedding'] for data in embedding_data['data']]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Embedding generation failed: {str(e)}")
+
+def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
+    return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+
+@app.post("/api/similarity")
+async def find_similar_documents(request: SimilarityRequest):
+    try:
+        # Generate embeddings for query and documents
+        query_embedding = generate_embeddings([request.query])[0]
+        doc_embeddings = generate_embeddings(request.docs)
+
+        # Compute similarities
+        similarities = [
+            cosine_similarity(np.array(query_embedding), np.array(doc_embed)) 
+            for doc_embed in doc_embeddings
+        ]
+
+        # Get indices of top 3 most similar documents
+        top_3_indices = sorted(
+            range(len(similarities)), 
+            key=lambda i: similarities[i], 
+            reverse=True
+        )[:3]
+
+        # Return top 3 documents
+        matches = [request.docs[i] for i in top_3_indices]
+
+        return {"matches": matches}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Similarity search failed: {str(e)}")
+
+
